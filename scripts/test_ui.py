@@ -19,7 +19,7 @@ window.lithe = {
     if(p.function==='tomcat.save') return {value:{saved:true}};
     if(p.function==='tomcat.discover') return {value:{modules:[{name:'old-web',path:'old-web',model:'eclipse',facet:'Eclipse WTP Web 3.1',webRoot:'old-web/WebContent',descriptor:'old-web/WebContent/WEB-INF/web.xml',warCandidates:['old-web/target/old-web.war'],explodedCandidates:['old-web/target/exploded']} ]}};
     if(p.function==='tomcat.planDeploy') return {value:{source:'/workspace/target/demo.war',
-      target:'/opt/apache-tomcat/webapps/demo.war',action:'create',
+      target:'/opt/apache-tomcat/webapps/demo.war',action:'create',artifact:'war',
       warning:'Stop Tomcat before deployment.',confirmationToken:'a'.repeat(64)}};
     if(p.function==='tomcat.deploy') return {value:{deployed:true,target:'/opt/apache-tomcat/webapps/demo.war'}};
     throw Error('Unsupported function '+p.function);
