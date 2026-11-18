@@ -53,32 +53,60 @@ func workspaceRelative(root, p string) string {
 	return filepath.ToSlash(rel)
 }
 
-// DiscoverWebModules visits only the workspace root and its immediate child
-// folders, and inspects known web/IDE layout paths. It never recursively walks
-// a project or evaluates IDE-specified absolute URLs.
+// DiscoverWebModules uses a bounded breadth-first walk (at most three folder
+// levels below the workspace). A Maven/Gradle aggregator may nest Web modules
+// deeper than one level; deployment sources still must pass Check's stronger
+// workspace/real-path validation before they can be used.
 func DiscoverWebModules(root string) ([]WebModule, error) {
 	root, err := realDirectory("Workspace", root)
 	if err != nil {
 		return nil, err
 	}
+	const maxDirectories = 256
+	const maxDepth = 3
+	const maxEntries = 20000
 	candidates := []string{root}
-	children, err := os.ReadDir(root)
-	if err != nil {
-		return nil, err
-	}
-	if len(children) > 20000 {
-		return nil, os.ErrInvalid
-	}
-	for _, child := range children {
-		if len(candidates) >= 65 {
-			break
+	depths := []int{0}
+	remaining := maxEntries
+	for index := 0; index < len(candidates) && len(candidates) < maxDirectories; index++ {
+		if depths[index] >= maxDepth {
+			continue
 		}
-		if child.IsDir() && !strings.HasPrefix(child.Name(), ".") && child.Name() != "target" && child.Name() != "build" && child.Name() != "node_modules" {
-			if existsDir(filepath.Join(root, child.Name())) {
-				candidates = append(candidates, filepath.Join(root, child.Name()))
+		children, err := os.ReadDir(candidates[index])
+		if err != nil {
+			if index == 0 {
+				return nil, err
+			}
+			continue
+		}
+		if len(children) > remaining {
+			if index == 0 {
+				return nil, os.ErrInvalid
+			}
+			break // Return candidates seen so far; never scan unbounded trees.
+		}
+		remaining -= len(children)
+		for _, child := range children {
+			if len(candidates) >= maxDirectories {
+				break
+			}
+			if !child.IsDir() || strings.HasPrefix(child.Name(), ".") {
+				continue
+			}
+			// Build outputs, dependencies and source/resource trees cannot
+			// contain an independent workspace module at this scope.
+			switch child.Name() {
+			case "target", "build", "node_modules", "vendor", "out", "bin", "dist", "src":
+				continue
+			}
+			nested := filepath.Join(candidates[index], child.Name())
+			if existsDir(nested) {
+				candidates = append(candidates, nested)
+				depths = append(depths, depths[index]+1)
 			}
 		}
 	}
+
 	modules := make([]WebModule, 0)
 	for _, dir := range candidates {
 		name := filepath.Base(dir)

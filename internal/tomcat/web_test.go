@@ -211,3 +211,52 @@ func TestServerAutoDeployAndCustomAppBase(t *testing.T) {
 		t.Fatal("accepted escaping appBase")
 	}
 }
+
+func TestDiscoverNestedWebModulesWithoutWalkingBuildDirectories(t *testing.T) {
+	_, root, _ := fixture(t)
+	for _, entry := range []string{
+		"apps/services/booking/src/main/webapp/WEB-INF",
+		"apps/services/booking/target",
+		"apps/libs/site/build/libs",
+		"node_modules/fake/src/main/webapp/WEB-INF",
+		"target/generated/src/main/webapp/WEB-INF",
+	} {
+		if err := os.MkdirAll(filepath.Join(root, filepath.FromSlash(entry)), 0755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for name, data := range map[string]string{
+		"apps/services/booking/pom.xml": "<project/>",
+		"apps/services/booking/src/main/webapp/WEB-INF/web.xml": "<web-app/>",
+		"apps/services/booking/target/booking.war": "placeholder",
+		"apps/libs/site/build.gradle": "plugins { id 'war' }",
+		"apps/libs/site/build/libs/site.war": "placeholder",
+		"node_modules/fake/src/main/webapp/WEB-INF/web.xml": "<web-app/>",
+		"target/generated/src/main/webapp/WEB-INF/web.xml": "<web-app/>",
+	} {
+		if err := os.WriteFile(filepath.Join(root, filepath.FromSlash(name)), []byte(data), 0644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	found, err := DiscoverWebModules(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	byPath := make(map[string]WebModule)
+	for _, item := range found {
+		if strings.HasPrefix(item.Path, "node_modules/") || strings.HasPrefix(item.Path, "target/") {
+			t.Fatalf("scanned excluded build/dependency directory: %+v", item)
+		}
+		byPath[item.Path] = item
+	}
+	booking, ok := byPath["apps/services/booking"]
+	if !ok || booking.Model != "maven" || booking.WebRoot != "apps/services/booking/src/main/webapp" ||
+		len(booking.WARCandidates) != 1 || booking.WARCandidates[0] != "apps/services/booking/target/booking.war" {
+		t.Fatalf("nested Maven web module: %+v (present=%v)", booking, ok)
+	}
+	site, ok := byPath["apps/libs/site"]
+	if !ok || site.Model != "gradle" || len(site.WARCandidates) != 1 ||
+		site.WARCandidates[0] != "apps/libs/site/build/libs/site.war" {
+		t.Fatalf("nested Gradle WAR module: %+v (present=%v)", site, ok)
+	}
+}
