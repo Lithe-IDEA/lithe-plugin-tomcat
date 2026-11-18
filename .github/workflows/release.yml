@@ -1,0 +1,61 @@
+name: Release
+
+# Push a tag v<version> matching plugin.json to publish a draft GitHub Release.
+# Lithe Store's tracker picks up stable releases and opens index pull requests.
+# docs/releases/<tag>.md, when present, lists the changes.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.14.3
+      - name: Build the archives
+        run: |
+          set -o pipefail
+          node scripts/package.mjs --expect-tag "$GITHUB_REF_NAME" | tee "$RUNNER_TEMP/checksums.txt"
+      - name: Run Web modules on real Tomcat
+        run: |
+          node scripts/test/fetch-tomcat.mjs
+          node scripts/test.mjs
+      - name: Publish the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          {
+            if [[ -s "docs/releases/$GITHUB_REF_NAME.md" ]]; then
+              cat "docs/releases/$GITHUB_REF_NAME.md"
+              echo
+            else
+              # shellcheck disable=SC2016 # the template literal is JavaScript
+              node -e '
+                const m = require("./io.github.lithe-idea.tomcat/plugin.json");
+                const needs = Object.entries(m.requires || {}).map(([k, v]) => `${k} ${v}`).join("、");
+                console.log(`兼容性：按插件契约 v${m.schemaVersion}（pluginAPIVersion ${m.pluginAPIVersion}）编写，需要支持 ${needs} 的 Lithe 桌面端。`);
+              '
+              echo
+            fi
+            echo "安装：Lithe Store（https://github.com/Lithe-IDEA/Lithe-store）中的 Tomcat 条目合并后，可在 设置 → 插件 → 插件市场 中搜索 Tomcat 并安装。"
+            echo
+            echo "SHA-256："
+            echo '```'
+            grep '^dist/' "$RUNNER_TEMP/checksums.txt" | sed 's#^dist/##'
+            echo '```'
+          } > "$RUNNER_TEMP/notes.md"
+          gh release create "$GITHUB_REF_NAME" dist/*.zip --draft --title "Tomcat $GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md"

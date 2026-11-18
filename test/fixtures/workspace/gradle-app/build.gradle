@@ -1,0 +1,4 @@
+plugins {
+    // id 'java' alone would not make this a Web module; the war plugin does.
+    id 'war'
+}

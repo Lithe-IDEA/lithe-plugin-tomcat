@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 0,
+  "id": "io.github.lithe-idea.tomcat",
+  "displayName": "Tomcat",
+  "version": "0.1.0",
+  "pluginAPIVersion": 0,
+  "requires": {
+    "buildSystems": 0,
+    "buildProviders": 0,
+    "settings": 0
+  },
+  "requiresTools": [
+    "java"
+  ],
+  "vendor": {
+    "id": "io.github.lithe-idea",
+    "displayName": "Lithe Community",
+    "signatureRequirement": "none"
+  },
+  "permissions": [
+    "process.build",
+    "languageServer.launch"
+  ],
+  "activationEvents": [
+    "onBuildSystem:tomcat"
+  ],
+  "languages": [],
+  "settings": [
+    {
+      "id": "tomcatHome",
+      "type": "directory",
+      "title": "Tomcat installation",
+      "description": "The Tomcat directory (CATALINA_HOME) every Web module runs on. Leave empty to use the CATALINA_HOME environment variable. Lithe only reads it: each module runs in its own CATALINA_BASE in Lithe's workspace state.",
+      "default": "",
+      "placeholder": "Automatic: CATALINA_HOME",
+      "page": {
+        "buildSystemID": "tomcat"
+      },
+      "section": "Tomcat"
+    },
+    {
+      "id": "httpPort",
+      "type": "integer",
+      "title": "HTTP port",
+      "description": "The port Tomcat serves the module on, on 127.0.0.1.",
+      "default": 8080,
+      "minimum": 1,
+      "maximum": 65535,
+      "scope": "project",
+      "page": {
+        "buildSystemID": "tomcat"
+      },
+      "section": "Tomcat"
+    }
+  ],
+  "buildSystems": [
+    {
+      "id": "tomcat",
+      "displayName": "Tomcat",
+      "detection": {
+        "markers": [
+          "pom.xml",
+          "build.gradle",
+          "build.gradle.kts",
+          ".project",
+          "web.xml"
+        ],
+        "nesting": "outermost"
+      },
+      "invocation": {
+        "executables": [
+          {
+            "kind": "toolchain",
+            "toolchainID": "java"
+          }
+        ]
+      },
+      "provider": {
+        "launch": {
+          "kind": "runtime",
+          "tool": "java",
+          "minimumVersion": "8",
+          "entry": "lib/lithe-tomcat-provider.jar"
+        },
+        "arguments": [
+          "--state",
+          "${workspaceStateDir}"
+        ],
+        "initializationOptions": {
+          "tomcatHome": "${setting:tomcatHome}",
+          "httpPort": "${setting:httpPort}"
+        },
+        "executesProjectCode": true,
+        "mayUseNetwork": true
+      },
+      "model": {
+        "source": "provider"
+      },
+      "run": [
+        {
+          "id": "tomcat",
+          "source": "provider",
+          "name": "Run on Tomcat",
+          "fromTargets": {
+            "tags": [
+              "web-application"
+            ]
+          },
+          "execution": "service",
+          "debug": {
+            "configurationType": "java"
+          }
+        }
+      ],
+      "sync": {
+        "watch": [
+          "pom.xml",
+          "build.gradle",
+          "build.gradle.kts",
+          ".project",
+          "web.xml"
+        ]
+      }
+    }
+  ]
+}
