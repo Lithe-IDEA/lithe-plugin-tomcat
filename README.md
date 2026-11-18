@@ -111,6 +111,8 @@ node scripts/e2e-host.mjs
 ```
 
 `scripts/test/fetch-java-plugin.mjs` 按 `test/java-plugin.json` 固定的版本和 SHA-256 下载本机平台的 Java Support 包。
+Java Support 不带 Eclipse JDT 语言服务器，按用户的安装查找（设置、`JDTLS_HOME`、`PATH`、Homebrew 等）；本机没有装时，
+用 `JDTLS_HOME="$(node scripts/test/fetch-java-plugin.mjs --jdtls)"` 取得同一文件固定的 JDT LS 1.61.0（与 Java 插件 CI 相同）。
 `JAVA_HOME` 必须是 JDK 21 或更新版本：Java Support 的 JDT 语言服务器（它运行 `java` 调试适配器）拒绝更旧的 JDK。
 测试按用户的顺序操作：先打开项目读取构建模型（这时提供者用默认设置启动），再在设置里选择 Tomcat，然后运行，
 所以它同时验证了宿主在插件设置改动后重启构建提供者
@@ -130,6 +132,7 @@ main 上用 Linux 包跑同一组测试（`host` 任务）。
 | Gradle（仅本地测试） | Gradle 官方发行包，按 `.sha256` 校验 | `.artifacts/gradle/` | 可以 |
 | 测试工作目录 | 每次测试重建 | `.artifacts/test-work/` | 不要复制，包含运行时状态 |
 | Java Support 插件包（仅宿主测试） | `test/java-plugin.json` 固定版本、下载地址和 SHA-256 | `.artifacts/java-plugin/` | 可以，按文件复制；不进插件包 |
+| Eclipse JDT LS（仅宿主测试） | `test/java-plugin.json` 的 `jdtls` 固定版本、下载地址和 SHA-256 | `.artifacts/jdtls/<版本>/` | 可以，按版本目录复制；不进插件包 |
 | 宿主检出（仅宿主测试） | `e2e/host/lithe-host.json` 固定的 Lithe-IDEA 修订，部分克隆 `desktop/` 与 `scripts/` | `.artifacts/lithe-host/` | 源码可以复制；其中编译出的 Core 只能在同一修订、平台和工具链下复用 |
 
 ## 功能矩阵

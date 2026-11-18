@@ -137,6 +137,9 @@ jobs:
           export LITHE_TEST_TOMCAT_PLUGIN_ARCHIVE="$PWD/dist/tomcat-$version-linux.zip"
           java_plugin="$(node scripts/test/fetch-java-plugin.mjs linux-x64)"
           export LITHE_TEST_JAVA_PLUGIN_ARCHIVE="$java_plugin"
+          # Java Support finds the JDT language server outside its package, as a user installs it.
+          jdtls="$(node scripts/test/fetch-java-plugin.mjs --jdtls)"
+          export JDTLS_HOME="$jdtls"
           export LITHE_TEST_TOMCAT_HOME="$PWD/.artifacts/tomcat/apache-tomcat-10.1.62"
           java -version
           node scripts/e2e-host.mjs
