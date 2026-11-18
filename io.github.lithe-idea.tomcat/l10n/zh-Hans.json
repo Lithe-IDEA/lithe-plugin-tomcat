@@ -1,0 +1,13 @@
+{
+  "settings": {
+    "tomcatHome": {
+      "title": "Tomcat 安装目录",
+      "description": "所有 Web 模块使用的 Tomcat 目录（CATALINA_HOME）。留空时使用 CATALINA_HOME 环境变量。Lithe 只读取这个目录，每个模块在 Lithe 工作区状态目录里使用自己的 CATALINA_BASE。",
+      "placeholder": "自动：CATALINA_HOME"
+    },
+    "httpPort": {
+      "title": "HTTP 端口",
+      "description": "Tomcat 在 127.0.0.1 上提供该模块的端口。"
+    }
+  }
+}

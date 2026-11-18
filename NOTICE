@@ -1,0 +1,11 @@
+Tomcat for Lithe
+Copyright 2026 Lithe Community contributors
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+vendor/lithe-plugin-sdk-java comes from the Lithe-core-rust repository
+(shared/plugins/sdk/java) at the revision sdk.lock.json records, under the
+license in vendor/LICENSE.
+
+The plugin does not include Apache Tomcat. It runs the Tomcat installation the
+user chooses.

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "source": "https://archive.apache.org/dist/tomcat",
+  "versions": [
+    {
+      "version": "9.0.124",
+      "url": "https://archive.apache.org/dist/tomcat/tomcat-9/v9.0.124/bin/apache-tomcat-9.0.124.tar.gz",
+      "sha512": "925e4fefe25b2ecccd032acd0b4cb1b506455037ed0f8b0e51824bed839c5e92bf5e58982b990d2fdcbc790bcda1a533db7faffb325f8a7baee939fc8ae871c1"
+    },
+    {
+      "version": "10.1.62",
+      "url": "https://archive.apache.org/dist/tomcat/tomcat-10/v10.1.62/bin/apache-tomcat-10.1.62.tar.gz",
+      "sha512": "ca776bf4045d3eadc2ede1b9bb2c33fc52ce1d102b63ca635ec6c0e515140027c6be7a15b2c1e1d8d8692aeaf25a72de99ca0f14135c3e1d163eedaf3dac5a54"
+    }
+  ]
+}

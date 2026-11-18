@@ -1,0 +1,191 @@
+name: CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Tomcat 9 and 10.1 on the JDK most projects use.
+          - java: "17"
+            tomcat: ""
+          # The oldest JDK the provider supports runs Tomcat 9, Maven and Gradle 8.
+          - java: "8"
+            tomcat: "9.0.124"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # 17 compiles the provider (javac --release 8); the last version listed is the default.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            17
+            ${{ matrix.java }}
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.14.3
+      # The runner image sets GRADLE_HOME to its own Gradle, which the provider
+      # prefers over PATH; point it at the Gradle installed above.
+      - name: Use the installed Gradle
+        run: echo "GRADLE_HOME=$(dirname "$(dirname "$(readlink -f "$(command -v gradle)")")")" >> "$GITHUB_ENV"
+      - name: Download the pinned Tomcat versions
+        run: node scripts/test/fetch-tomcat.mjs
+      - name: Check the manifest and build the archives
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
+          PATH_PREFIX: ${{ env.JAVA_HOME_17_X64 }}/bin
+        run: PATH="$PATH_PREFIX:$PATH" node scripts/package.mjs
+      - name: Run Web modules on real Tomcat
+        run: |
+          if [[ -n "${{ matrix.tomcat }}" ]]; then
+            export LITHE_TEST_TOMCAT_HOMES="$PWD/.artifacts/tomcat/apache-tomcat-${{ matrix.tomcat }}"
+          fi
+          java -version
+          node scripts/test.mjs
+      - name: Hand the Windows archive to the Windows job
+        if: matrix.java == '17'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tomcat-windows
+          path: dist/tomcat-*-windows.zip
+          if-no-files-found: error
+      - name: Validate against Lithe Store rules
+        if: matrix.java == '17'
+        run: |
+          git clone --depth 1 https://github.com/Lithe-IDEA/Lithe-store "$RUNNER_TEMP/store"
+          node --input-type=module -e "
+            import { readPackageManifests, checkManifest } from '$RUNNER_TEMP/store/scripts/validate-index.mjs';
+            import { readdirSync, readFileSync } from 'node:fs';
+            const manifest = JSON.parse(readFileSync('io.github.lithe-idea.tomcat/plugin.json', 'utf8'));
+            const entry = { id: manifest.id };
+            let failed = false;
+            for (const name of readdirSync('dist').filter((name) => name.endsWith('.zip'))) {
+              const { manifests, unsafe } = readPackageManifests('dist/' + name, entry.id);
+              const problems = [...unsafe, ...checkManifest(manifests, entry, manifest)];
+              for (const problem of problems) { console.error(name + ': ' + problem); failed = true; }
+            }
+            process.exit(failed ? 1 : 0);
+          "
+      - name: Upload timing reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: timings-linux-java-${{ matrix.java }}
+          path: .artifacts/test-stability/
+          if-no-files-found: warn
+
+  # The plugin in the real desktop host (e2e/host/, host pinned by e2e/host/lithe-host.json):
+  # installed through the host's installer next to the pinned Java Support package, a Web
+  # module runs and debugs from its run configuration. The host builds its own pinned Core.
+  host:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    needs: linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read the pinned host revision
+        id: host
+        run: echo "revision=$(node -p 'require("./e2e/host/lithe-host.json").revision')" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: 1lck/Lithe-IDEA
+          ref: ${{ steps.host.outputs.revision }}
+          path: .artifacts/host-go
+          sparse-checkout: desktop/go.mod
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: .artifacts/host-go/desktop/go.mod
+          cache: false
+      - uses: dtolnay/rust-toolchain@1.100.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # 17 compiles the provider; 21 is the default, because the Java plugin's language
+      # server, which runs its java debug adapter, refuses older JDKs.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            17
+            21
+      - name: Build the archives
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
+          PATH_PREFIX: ${{ env.JAVA_HOME_17_X64 }}/bin
+        run: PATH="$PATH_PREFIX:$PATH" node scripts/package.mjs
+      - name: Download the pinned Tomcat versions
+        run: node scripts/test/fetch-tomcat.mjs
+      - name: Run and debug a Web module in the desktop host
+        run: |
+          version="$(node -p 'require("./io.github.lithe-idea.tomcat/plugin.json").version')"
+          export LITHE_TEST_TOMCAT_PLUGIN_ARCHIVE="$PWD/dist/tomcat-$version-linux.zip"
+          java_plugin="$(node scripts/test/fetch-java-plugin.mjs linux-x64)"
+          export LITHE_TEST_JAVA_PLUGIN_ARCHIVE="$java_plugin"
+          # Java Support finds the JDT language server outside its package, as a user installs it.
+          jdtls="$(node scripts/test/fetch-java-plugin.mjs --jdtls)"
+          export JDTLS_HOME="$jdtls"
+          export LITHE_TEST_TOMCAT_HOME="$PWD/.artifacts/tomcat/apache-tomcat-10.1.62"
+          java -version
+          node scripts/e2e-host.mjs
+
+  # The Windows archive built above runs every Web module through mvn.cmd and
+  # gradle.bat, on the same Tomcat versions.
+  windows:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    needs: linux
+    runs-on: windows-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.14.3
+      - name: Use the installed Gradle
+        run: |
+          $gradle = (Get-Command gradle).Source
+          "GRADLE_HOME=$(Split-Path (Split-Path $gradle -Parent) -Parent)" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - uses: actions/download-artifact@v4
+        with:
+          name: tomcat-windows
+          path: ${{ runner.temp }}/archive
+      - name: Unpack the Windows archive
+        run: |
+          $archive = Get-ChildItem "$env:RUNNER_TEMP\archive\tomcat-*-windows.zip" | Select-Object -First 1
+          Expand-Archive -Path $archive.FullName -DestinationPath "dist\package"
+      - name: Download the pinned Tomcat versions
+        run: node scripts/test/fetch-tomcat.mjs
+      - name: Run Web modules on real Tomcat
+        run: node scripts/test.mjs
+      - name: Upload timing reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: timings-windows
+          path: .artifacts/test-stability/
+          if-no-files-found: warn
