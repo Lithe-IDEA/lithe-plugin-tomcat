@@ -1,0 +1,13 @@
+{
+  "repository": "https://github.com/1lck/Lithe-IDEA.git",
+  "revision": "81d01a25bbecc24292aaa3ef0454c19d7ea53e36",
+  "packages": {
+    "./internal/workbench": "^TestTomcatPlugin(RunsAWebModule|DebugsAWebModule)$"
+  },
+  "requiredEnvironment": {
+    "LITHE_TEST_TOMCAT_PLUGIN_ARCHIVE": "tomcat-<version>-darwin.zip to install, for example dist/tomcat-0.1.0-darwin.zip",
+    "LITHE_TEST_JAVA_PLUGIN_ARCHIVE": "Lithe-Java-Support-<version>-darwin-<arch>.zip from Lithe-IDEA/lithe-plugin-java releases; its java tool launches Tomcat and its java adapter debugs it",
+    "LITHE_TEST_TOMCAT_HOME": "an unpacked Tomcat, for example .artifacts/tomcat/apache-tomcat-10.1.62 from scripts/test/fetch-tomcat.mjs",
+    "JAVA_HOME": "a JDK 21 or later: the Java plugin's JDT language server, which runs its java debug adapter, refuses older JDKs; Tomcat also runs on it"
+  }
+}

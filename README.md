@@ -68,6 +68,9 @@ Tomcat 进程由 Lithe 启动、停止和调试，插件只负责准备启动计
 | `lithe/build/prepareRun` 准备运行 | INFO（SDK 记录一次） | `tomcat.run.noHome`、`invalidHome`、`portInUse`、`notWebModule`、`buildFailed`、`noTool`、`noArtifact`、`unsupportedArguments`、`invalidProject`、`invalidDebug` | `buildFileUnreadable` |
 
 取消运行准备不记录失败。日志只带类别和计数，不含路径、命令输出或用户输入；返回给用户的错误提示也不含路径。
+运行失败时 Lithe 显示提供者的错误提示（需要包含 [1lck/Lithe-IDEA#2143](https://github.com/1lck/Lithe-IDEA/issues/2143)
+修复的桌面端）。提示有中英文两套，按 `initialize` 的 `locale` 选择；插件契约目前还不向提供者传界面语言
+（[1lck/Lithe-IDEA#2144](https://github.com/1lck/Lithe-IDEA/issues/2144)），所以暂时总是英文。
 Maven、Gradle 的构建输出和 Tomcat 自己的日志只出现在运行窗口，不写日志文件。
 
 ## 安装
@@ -92,6 +95,31 @@ HTTP 读取页面；同时检查调试启动（JDWP 握手）、端口占用、�
 日志记录、以及插件包和 Tomcat 安装目录在测试前后完全一致。Gradle 用 `GRADLE_HOME`、`PATH` 或
 `.artifacts/gradle/gradle-*`，测试使用独立的 `GRADLE_USER_HOME` 并在结束时停止它启动的 daemon。
 
+### 宿主端到端测试
+
+`e2e/host/` 下的测试用 Lithe 桌面端自己的测试框架（内部 Go 包）驱动真实工作台：用真实的安装器装上本插件包和
+Java Support 插件包，打开一个 Eclipse Dynamic Web Project，从运行配置运行（页面能访问、运行窗口显示 Tomcat
+日志、Stop 后端口释放），以及调试（Tomcat 挂起等待，Java 调试器连接后请求停在项目源码的断点上，Continue 后
+请求完成）。测试最后检查插件包和 Tomcat 安装目录没有被改动。
+
+```sh
+JAVA_HOME=<JDK 21 或更新版本> \
+LITHE_TEST_TOMCAT_PLUGIN_ARCHIVE=dist/tomcat-<版本>-darwin.zip \
+LITHE_TEST_JAVA_PLUGIN_ARCHIVE="$(node scripts/test/fetch-java-plugin.mjs)" \
+LITHE_TEST_TOMCAT_HOME=.artifacts/tomcat/apache-tomcat-10.1.62 \
+node scripts/e2e-host.mjs
+```
+
+`scripts/test/fetch-java-plugin.mjs` 按 `test/java-plugin.json` 固定的版本和 SHA-256 下载本机平台的 Java Support 包。
+`JAVA_HOME` 必须是 JDK 21 或更新版本：Java Support 的 JDT 语言服务器（它运行 `java` 调试适配器）拒绝更旧的 JDK。
+测试按用户的顺序操作：先打开项目读取构建模型（这时提供者用默认设置启动），再在设置里选择 Tomcat，然后运行，
+所以它同时验证了宿主在插件设置改动后重启构建提供者
+（[1lck/Lithe-IDEA#2142](https://github.com/1lck/Lithe-IDEA/issues/2142)）。
+
+脚本把 `e2e/host/lithe-host.json` 固定的宿主修订检出到 `.artifacts/lithe-host`，再以 overlay 方式加入这里的测试
+文件，用宿主的 `scripts/desktop/desktop-go.sh test` 运行（第一次会编译该宿主固定的 Core）。CI 在 PR 标记 ready 后和
+main 上用 Linux 包跑同一组测试（`host` 任务）。
+
 ### 构建资源
 
 | 资源 | 来源与校验 | 位置 | 能否在工作树之间复制 |
@@ -101,6 +129,8 @@ HTTP 读取页面；同时检查调试启动（JDWP 握手）、端口占用、�
 | Tomcat（仅测试） | `test/tomcat-versions.json` 固定版本、URL 和 SHA-512 | `.artifacts/tomcat/` | 可以，按版本目录复制；不进插件包 |
 | Gradle（仅本地测试） | Gradle 官方发行包，按 `.sha256` 校验 | `.artifacts/gradle/` | 可以 |
 | 测试工作目录 | 每次测试重建 | `.artifacts/test-work/` | 不要复制，包含运行时状态 |
+| Java Support 插件包（仅宿主测试） | `test/java-plugin.json` 固定版本、下载地址和 SHA-256 | `.artifacts/java-plugin/` | 可以，按文件复制；不进插件包 |
+| 宿主检出（仅宿主测试） | `e2e/host/lithe-host.json` 固定的 Lithe-IDEA 修订，部分克隆 `desktop/` 与 `scripts/` | `.artifacts/lithe-host/` | 源码可以复制；其中编译出的 Core 只能在同一修订、平台和工具链下复用 |
 
 ## 功能矩阵
 

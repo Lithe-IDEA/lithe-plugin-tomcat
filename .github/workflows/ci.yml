@@ -88,6 +88,59 @@ jobs:
           path: .artifacts/test-stability/
           if-no-files-found: warn
 
+  # The plugin in the real desktop host (e2e/host/, host pinned by e2e/host/lithe-host.json):
+  # installed through the host's installer next to the pinned Java Support package, a Web
+  # module runs and debugs from its run configuration. The host builds its own pinned Core.
+  host:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    needs: linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read the pinned host revision
+        id: host
+        run: echo "revision=$(node -p 'require("./e2e/host/lithe-host.json").revision')" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: 1lck/Lithe-IDEA
+          ref: ${{ steps.host.outputs.revision }}
+          path: .artifacts/host-go
+          sparse-checkout: desktop/go.mod
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: .artifacts/host-go/desktop/go.mod
+          cache: false
+      - uses: dtolnay/rust-toolchain@1.100.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # 17 compiles the provider; 21 is the default, because the Java plugin's language
+      # server, which runs its java debug adapter, refuses older JDKs.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: |
+            17
+            21
+      - name: Build the archives
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
+          PATH_PREFIX: ${{ env.JAVA_HOME_17_X64 }}/bin
+        run: PATH="$PATH_PREFIX:$PATH" node scripts/package.mjs
+      - name: Download the pinned Tomcat versions
+        run: node scripts/test/fetch-tomcat.mjs
+      - name: Run and debug a Web module in the desktop host
+        run: |
+          version="$(node -p 'require("./io.github.lithe-idea.tomcat/plugin.json").version')"
+          export LITHE_TEST_TOMCAT_PLUGIN_ARCHIVE="$PWD/dist/tomcat-$version-linux.zip"
+          java_plugin="$(node scripts/test/fetch-java-plugin.mjs linux-x64)"
+          export LITHE_TEST_JAVA_PLUGIN_ARCHIVE="$java_plugin"
+          export LITHE_TEST_TOMCAT_HOME="$PWD/.artifacts/tomcat/apache-tomcat-10.1.62"
+          java -version
+          node scripts/e2e-host.mjs
+
   # The Windows archive built above runs every Web module through mvn.cmd and
   # gradle.bat, on the same Tomcat versions.
   windows:

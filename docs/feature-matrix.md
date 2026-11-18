@@ -16,10 +16,10 @@
 | ID | 能力 | macOS | Windows | Linux | 最近验证 |
 | --- | --- | --- | --- | --- | --- |
 | `tomcat-web-modules` | 识别 Maven war、Gradle war、Eclipse Dynamic Web Project 和普通 Web 目录 | implemented / pending | implemented / pending | implemented / pending | 2026-11-18 `scripts/test.mjs` 通过（macOS arm64，Tomcat 9.0.124 与 10.1.62，JDK 17；Tomcat 9.0.124，JDK 8） |
-| `tomcat-run` | 构建模块并在私有 CATALINA_BASE 中运行，HTTP 可访问 | implemented / pending | implemented / pending | implemented / pending | 同上 |
+| `tomcat-run` | 构建模块并在私有 CATALINA_BASE 中运行，HTTP 可访问 | implemented / pending | implemented / pending | implemented / pending | 同上；2026-11-18 宿主端到端测试 `TestTomcatPluginRunsAWebModule` 通过（macOS arm64，宿主分支 1lck/Lithe-IDEA#2145，Tomcat 9.0.124 与 10.1.62）：运行配置启动、页面可访问、运行窗口有 Tomcat 日志、Stop 释放端口 |
 | `tomcat-in-place` | Eclipse 项目和普通 Web 目录原地运行，挂载编译输出，JSP 修改无需重新部署 | implemented / pending | implemented / pending | implemented / pending | 同上 |
-| `tomcat-debug` | 按 `java` 调试类型连接调试，Tomcat 以 `suspend=y` 等待 | implemented / pending | implemented / pending | implemented / pending | 同上，验证到 JDWP 握手；宿主连接调试器未验收 |
-| `tomcat-settings` | Tomcat 安装目录与 HTTP 端口设置，中英文 | implemented / pending | implemented / pending | implemented / pending | 2026-11-18 清单与翻译通过 Core 校验；宿主界面未验收 |
+| `tomcat-debug` | 按 `java` 调试类型连接调试，Tomcat 以 `suspend=y` 等待 | implemented / pending | implemented / pending | implemented / pending | `scripts/test.mjs` 验证到 JDWP 握手；2026-11-18 宿主端到端测试 `TestTomcatPluginDebugsAWebModule` 通过（同上，Java Support 4.0.1，JDK 21）：Java 调试器连接，请求停在项目源码断点，Continue 后完成 |
+| `tomcat-settings` | Tomcat 安装目录与 HTTP 端口设置，中英文 | implemented / pending | implemented / pending | implemented / pending | 2026-11-18 清单与翻译通过 Core 校验；宿主端到端测试在读取模型后保存设置再运行，新值生效（需要 1lck/Lithe-IDEA#2142 的修复）；宿主界面未验收。提供者错误提示暂时只有英文（1lck/Lithe-IDEA#2144） |
 
 ## 证据与验证方法
 
@@ -32,4 +32,4 @@
 | `tomcat-settings` | `plugin.json` 的 `settings`、`l10n/zh-Hans.json` | `scripts/test.mjs`：缺少 Tomcat 时的中文提示 | 中英文界面下打开设置页，修改安装目录和端口后运行使用新值 |
 
 CI（`.github/workflows/ci.yml`）在 Linux 上用 JDK 17 和 JDK 8 运行同一套测试，ready 状态的 PR 还会在 Windows 上用
-`mvn.cmd` 和 `gradle.bat` 运行。
+`mvn.cmd` 和 `gradle.bat` 运行，并在 Linux 上对固定的宿主运行宿主端到端测试（`host` 任务）。
