@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tomcat</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <div><h1>Tomcat</h1><p id="subtitle" data-i18n="subtitle">Local servlet container</p></div>
+      <button id="refresh" class="secondary" data-i18n="refresh" type="button">Refresh</button>
+    </header>
+    <div id="notice" class="notice" role="status" aria-live="polite"></div>
+    <section>
+      <div class="section-head"><h2 data-i18n="webModules">Web modules / Facets</h2><button type="button" class="secondary" id="discover" data-i18n="rescan">Rescan</button></div>
+      <p class="muted" data-i18n="webHelp">The Java plugin owns project libraries, SDKs and source paths. This view detects deployable Web facets and their artifacts.</p>
+      <div id="modules" class="modules" aria-live="polite"></div>
+    </section>
+    <section>
+      <h2 data-i18n="configuration">Configuration</h2>
+      <div class="form">
+        <label><span data-i18n="home">Tomcat installation directory *</span><input id="home" autocomplete="off" spellcheck="false" placeholder="/opt/tomcat"></label>
+        <label><span data-i18n="base">Catalina base (optional)</span><input id="base" autocomplete="off" spellcheck="false" placeholder="CATALINA_HOME when empty"></label>
+        <label><span data-i18n="artifact">Deployable artifact type</span><select id="artifact"><option value="war" data-i18n="kindWar">WAR archive</option><option value="exploded" data-i18n="kindExploded">Exploded web application</option></select></label>
+        <label class="war-field" id="warRow"><span data-i18n="war">WAR file (relative to workspace)</span><div class="inline"><input id="war" spellcheck="false" placeholder="target/app.war"><button type="button" class="secondary" id="pick" data-i18n="browse">Browse</button></div></label>
+        <label class="war-field" id="explodedRow" hidden><span data-i18n="exploded">Exploded web app directory (relative to workspace)</span><input id="exploded" spellcheck="false" placeholder="target/app"></label>
+        <label><span data-i18n="context">Context path</span><input id="context" spellcheck="false" value="/" placeholder="/demo"></label>
+        <label><span data-i18n="port">JDWP port (localhost only)</span><input id="port" type="number" min="1024" max="65535" step="1" value="5005"></label>
+        <label class="watch-line war-field"><input id="watchChanges" type="checkbox"><span data-i18n="watchChanges">Auto-redeploy changed WAR while Tomcat runs (opt-in)</span></label>
+      </div>
+      <div class="actions"><button type="button" id="save" data-i18n="save">Save configuration</button><button class="secondary" type="button" id="inspect" data-i18n="inspect">Inspect installation</button></div>
+    </section>
+    <section>
+      <h2 data-i18n="server">Server</h2>
+      <p class="muted" id="runStatus">Not running in this Lithe session</p>
+      <div class="actions"><button type="button" id="start" data-i18n="start">Start</button><button type="button" id="debug" class="secondary" data-i18n="debug">Debug (Java attach)</button><button type="button" id="stop" class="secondary" data-i18n="stop">Stop</button></div>
+      <p class="footnote" data-i18n="debugHelp">Debug starts a loopback-only JDWP listener and asks Lithe to attach the Java Support debugger automatically.</p>
+      <p class="footnote" data-i18n="watchHelp">Auto redeploy requires a first confirmed deployment, a Lithe-managed run and Tomcat Host autoDeploy=true. External file changes stop the watcher.</p>
+    </section>
+    <section>
+      <h2 data-i18n="deployment">Web deployment</h2>
+      <p class="muted" data-i18n="deployHelp">Stop Tomcat before deploying. WAR and exploded folders must be inside this workspace. Always review the exact target before replacing it.</p>
+      <div class="actions"><button type="button" id="previewDeploy" class="secondary" data-i18n="previewDeploy">Preview deployment</button></div>
+      <div id="confirmBox" hidden>
+        <dl><div><dt data-i18n="source">Source</dt><dd id="planSource"></dd></div><div><dt data-i18n="destination">Destination</dt><dd id="planTarget"></dd></div><div><dt data-i18n="operation">Operation</dt><dd id="planAction"></dd></div><div><dt data-i18n="artifact">Artifact</dt><dd id="planArtifact"></dd></div></dl>
+        <p id="planWarning" class="warning"></p>
+        <div class="actions"><button type="button" id="confirmDeploy" data-i18n="confirmDeploy">Confirm deployment</button><button type="button" id="cancelDeploy" class="secondary" data-i18n="cancel">Cancel</button></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

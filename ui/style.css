@@ -1,0 +1,20 @@
+:root{font-family:var(--lithe-font-family,system-ui,sans-serif);font-size:13px;color:var(--lithe-text,#dedee3);background:var(--lithe-background,#202124);color-scheme:light dark}
+*{box-sizing:border-box}body{margin:0}main{max-width:910px;padding:16px 20px 32px;margin:auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}h1{font-size:19px;letter-spacing:-.3px;font-weight:650;margin:0}h2{font-size:14px;margin:0 0 14px;font-weight:650}header p{color:var(--lithe-text-secondary,#999);margin:4px 0 0;font-size:12px}
+section{border-top:1px solid var(--lithe-border,#444);padding:19px 0 22px}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px}.form label{display:flex;flex-direction:column;gap:7px;min-width:0}.form label span{font-size:12px;color:var(--lithe-text-secondary,#aaa)}.war-field{grid-column:span 2}
+input{height:32px;background:var(--lithe-input-background,transparent);border:1px solid var(--lithe-border,#666);border-radius:6px;color:inherit;font:inherit;padding:6px 9px;outline:none;min-width:0;width:100%}input:focus{border-color:var(--lithe-accent,#5a96df)}
+.inline{display:flex;gap:8px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:17px}button{border:1px solid transparent;border-radius:6px;background:var(--lithe-accent,#427fcb);color:#fff;padding:7px 13px;font:inherit;cursor:pointer;white-space:nowrap}button.secondary{background:var(--lithe-surface,#36383e);border-color:var(--lithe-border,#555);color:inherit}button:disabled{opacity:.45;cursor:default}
+.muted,.footnote{color:var(--lithe-text-secondary,#aaa);line-height:1.5;margin:4px 0;font-size:12px}.footnote{margin-top:12px}.notice{min-height:0;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}.notice:not(:empty){padding:10px 12px;border:1px solid var(--lithe-border,#777);border-radius:6px;margin:4px 0 14px}.notice.error{border-color:#b65f5f;color:var(--lithe-text,#e8b3b3)}
+#confirmBox{margin-top:14px;border:1px solid var(--lithe-border,#777);padding:15px;border-radius:8px}#confirmBox[hidden]{display:none}dl{margin:0}dl div{display:grid;grid-template-columns:105px minmax(0,1fr);gap:10px;margin-bottom:8px}dt{color:var(--lithe-text-secondary,#aaa)}dd{margin:0;overflow-wrap:anywhere}.warning{line-height:1.5;font-size:12px;color:var(--lithe-text-secondary,#baa);margin:10px 0 0}
+@media(max-width:620px){main{padding:12px}.form{grid-template-columns:1fr}.war-field{grid-column:auto}dl div{grid-template-columns:1fr;gap:2px}}
+/* Web-facet discovery complements the Java plugin's native project-structure page. */
+.section-head{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:10px}.section-head h2{margin:0}
+.modules{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:10px;margin-top:13px}
+.module{border:1px solid var(--lithe-border,#555);border-radius:8px;padding:12px 14px;min-width:0;background:var(--lithe-surface,#27292e)}
+.module h3{font-size:13px;margin:0 0 6px;font-weight:600}.module p{color:var(--lithe-text-secondary,#aaa);font-size:12px;white-space:normal;overflow-wrap:anywhere;margin:4px 0}
+.module .actions{margin-top:9px}.module button{font-size:12px;padding:5px 9px}
+select{height:32px;background:var(--lithe-input-background,#282a30);border:1px solid var(--lithe-border,#666);color:inherit;padding:4px 8px;border-radius:6px;min-width:0;width:100%}
+#explodedRow[hidden],#warRow[hidden]{display:none}
+
+.watch-line{display:flex!important;flex-direction:row!important;align-items:center;gap:10px;line-height:1.5}.watch-line input{width:16px;height:16px;flex:none}.watch-line span{font-size:12px}

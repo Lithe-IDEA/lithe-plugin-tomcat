@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 0,
+  "id": "io.github.lithe-idea.tomcat",
+  "displayName": "Tomcat",
+  "version": "0.2.0",
+  "pluginAPIVersion": 0,
+  "requires": {
+    "backend": 0,
+    "ui": 0
+  },
+  "requiresTools": [
+    "java"
+  ],
+  "vendor": {
+    "id": "io.github.lithe-idea",
+    "displayName": "Lithe Community",
+    "signatureRequirement": "none"
+  },
+  "permissions": [
+    "backend.launch",
+    "ui.contribute",
+    "ui.web",
+    "workspace.metadata",
+    "run.start"
+  ],
+  "activationEvents": [
+    "onView:io.github.lithe-idea.tomcat.panel"
+  ],
+  "languages": [],
+  "ui": {
+    "toolWindows": [
+      {
+        "id": "io.github.lithe-idea.tomcat.panel",
+        "title": "Tomcat",
+        "placement": "bottom",
+        "icon": {
+          "host": "services"
+        },
+        "web": {
+          "entry": "ui/index.html"
+        }
+      }
+    ],
+    "commands": [
+      {
+        "id": "io.github.lithe-idea.tomcat.open",
+        "title": "Open Tomcat",
+        "toolWindowID": "io.github.lithe-idea.tomcat.panel",
+        "placements": [
+          "commandPalette",
+          "menu"
+        ]
+      }
+    ]
+  },
+  "backend": {
+    "launch": {
+      "kind": "packaged",
+      "path": "bin/lithe-tomcat-backend"
+    }
+  }
+}
