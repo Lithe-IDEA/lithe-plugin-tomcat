@@ -18,3 +18,7 @@
 4. **JavaEE extras** — JSP/EL completion, auto WAR build, Maven profile wiring, classpath-global libraries and editing Web Facet declarations are separate future work and are not represented as completed here.
 
 Run local checks via README. Review GitHub Actions separately after the PR has been created; no CI result is claimed until observed.
+
+## Additional unverified change (Tomcat PR #1)
+
+- Bounded nested module discovery now includes Maven and Gradle Web modules up to three directory levels below the workspace; it skips `target`, `build`, `src`, `node_modules`, `vendor` and other generated trees. `TestDiscoverNestedWebModulesWithoutWalkingBuildDirectories` was added. **This new test has not been run on the updated branch in the current environment.** Keep the PR in Draft until CI or a local Go test run verifies the new commit and native Lithe/Tomcat acceptance follows.

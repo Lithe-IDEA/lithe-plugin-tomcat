@@ -8,7 +8,7 @@ An **independent, on-demand Tomcat integration** for Lithe-IDEA's Viva desktop. 
 
 | Feature | 0.2.0 behavior |
 | --- | --- |
-| Project/Web Facet discovery | Read-only discovery of Maven/Gradle web layouts, Eclipse WTP `.settings` web facets/component resources and IntelliJ `.iml` Web facets; finds local WAR and exploded output directories in each module. It does **not** rewrite IDE files. |
+| Project/Web Facet discovery | Read-only bounded discovery of Maven/Gradle web layouts (up to three nested module-directory levels), Eclipse WTP `.settings` web facets/component resources and IntelliJ `.iml` Web facets; finds WAR and exploded outputs. It skips build/source/dependency trees (256 directory / 20,000 entry scan budget) and **never** rewrites IDE files. |
 | Project SDK, classpath, libraries | Remain in the existing **Java Support 4.x Project Structure** page (Sources / Paths / Dependencies, per-module JRE, library scope). Tomcat does not duplicate or override JDT's authoritative classpath. |
 | Tomcat installation | Explicit Catalina Home and optional Catalina Base; verifies Bootstrap and JULI JARs, config files, and real application base. Reads `server.xml` Host `appBase`/`autoDeploy` and HTTP connector ports without writing it. |
 | Run / Stop | Starts `org.apache.catalina.startup.Bootstrap` with the **JDK selected by Lithe** and host-owned Run lifecycle. No shell or arbitrary scripts, and no bundled Tomcat/JDK. |
