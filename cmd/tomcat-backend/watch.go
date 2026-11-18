@@ -151,7 +151,7 @@ func (s *session) watchChanges(ctx context.Context, runKey, runID string, c tomc
 	defer ticker.Stop()
 	var lastSize int64 = -1
 	var lastMod time.Time
-	stable := 0
+	dirty := false
 	for {
 		select {
 		case <-ctx.Done():
@@ -174,13 +174,15 @@ func (s *session) watchChanges(ctx context.Context, runKey, runID string, c tomc
 		}
 		if fi.Size() != lastSize || !fi.ModTime().Equal(lastMod) {
 			lastSize, lastMod = fi.Size(), fi.ModTime()
-			stable = 0
+			dirty = true
 			continue
 		}
-		stable++
-		if stable < 1 {
+		// A size/mtime transition must remain stable for one full poll
+		// interval. Do not re-hash a large WAR on every idle tick.
+		if !dirty {
 			continue
 		}
+		dirty = false
 		// Hash only after the size and timestamp have stopped changing;
 		// avoid re-reading hundreds of MiB every polling interval.
 		plan, err := tomcat.InspectDeploy(checked)
