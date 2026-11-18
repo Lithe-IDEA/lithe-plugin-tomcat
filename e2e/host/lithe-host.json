@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/1lck/Lithe-IDEA.git",
-  "revision": "81d01a25bbecc24292aaa3ef0454c19d7ea53e36",
+  "revision": "c47ae0496a1b7cde7c016a9b40a10c2ff54fdaac",
   "packages": {
     "./internal/workbench": "^TestTomcatPlugin(RunsAWebModule|DebugsAWebModule)$"
   },
