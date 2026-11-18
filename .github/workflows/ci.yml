@@ -38,6 +38,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.14.3
+      # The runner image sets GRADLE_HOME to its own Gradle, which the provider
+      # prefers over PATH; point it at the Gradle installed above.
+      - name: Use the installed Gradle
+        run: echo "GRADLE_HOME=$(dirname "$(dirname "$(readlink -f "$(command -v gradle)")")")" >> "$GITHUB_ENV"
       - name: Download the pinned Tomcat versions
         run: node scripts/test/fetch-tomcat.mjs
       - name: Check the manifest and build the archives
@@ -106,6 +110,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.14.3
+      - name: Use the installed Gradle
+        run: |
+          $gradle = (Get-Command gradle).Source
+          "GRADLE_HOME=$(Split-Path (Split-Path $gradle -Parent) -Parent)" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
       - uses: actions/download-artifact@v4
         with:
           name: tomcat-windows
