@@ -53,6 +53,26 @@
       "section": "Tomcat"
     }
   ],
+  "settingRegions": [
+    {
+      "id": "build",
+      "page": {
+        "buildSystemID": "tomcat"
+      },
+      "keywords": [
+        "CATALINA_HOME",
+        "CATALINA_BASE",
+        "Servlet",
+        "JSP",
+        "WAR",
+        "exploded",
+        "web.xml",
+        "HTTP port",
+        "8080",
+        "127.0.0.1"
+      ]
+    }
+  ],
   "buildSystems": [
     {
       "id": "tomcat",

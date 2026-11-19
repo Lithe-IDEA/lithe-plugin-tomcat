@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/Lithe-IDEA/Lithe-core-rust/main/shared/plugins/contract/v1/plugin-l10n.schema.json",
   "settings": {
     "tomcatHome": {
       "title": "Tomcat 安装目录",
@@ -8,6 +9,20 @@
     "httpPort": {
       "title": "HTTP 端口",
       "description": "Tomcat 在 127.0.0.1 上提供该模块的端口。"
+    }
+  },
+  "sections": {
+    "Tomcat": "Tomcat"
+  },
+  "settingRegions": {
+    "build": {
+      "keywords": [
+        "Tomcat 安装目录",
+        "HTTP 端口",
+        "Web 模块",
+        "应用服务器",
+        "容器"
+      ]
     }
   }
 }

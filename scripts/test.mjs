@@ -391,6 +391,16 @@ await withInterrupts(async (signal) => {
       await suite(home, signal);
     }
     await check("without a Tomcat home the run fails with the localized setup message", missingHome);
+    await check("the manifest declares settingRegions search keywords and Chinese translations", () => {
+      const manifest = JSON.parse(readFileSync(join(pluginDir, "plugin.json"), "utf8"));
+      const buildRegion = (manifest.settingRegions ?? []).find((region) => region.id === "build");
+      assert.equal(buildRegion?.page?.buildSystemID, "tomcat");
+      assert.ok(Array.isArray(buildRegion?.keywords) && buildRegion.keywords.length > 0);
+
+      const zh = JSON.parse(readFileSync(join(pluginDir, "l10n", "zh-Hans.json"), "utf8"));
+      assert.ok(zh.sections?.Tomcat, "zh-Hans sections.Tomcat");
+      assert.ok(Array.isArray(zh.settingRegions?.build?.keywords) && zh.settingRegions.build.keywords.length > 0);
+    });
     await check("the plugin package is unchanged", () => assert.equal(treeHash(pluginDir), packageBefore));
   } catch (error) {
     failed = true;
